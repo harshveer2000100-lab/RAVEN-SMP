@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raven SMP | Rank Store</title>
+<style>
+:root{--bg:#080b16;--panel:#11182b;--muted:#aab4cc;--white:#f7f8ff;--accent:#8b5cf6;--cyan:#22d3ee}
+*{box-sizing:border-box}body{margin:0;font-family:Inter,Segoe UI,Arial,sans-serif;background:radial-gradient(circle at 50% -10%,#27315c 0,#10162a 35%,var(--bg) 72%);color:var(--white);min-height:100vh}
+header{display:flex;justify-content:space-between;align-items:center;padding:22px max(6%,calc((100% - 1120px)/2));border-bottom:1px solid #ffffff16;background:#080b1680;backdrop-filter:blur(12px);position:sticky;top:0;z-index:2}
+.brand{font-weight:900;letter-spacing:2px;font-size:20px}.brand span{color:var(--cyan)}.server{color:var(--muted);font-size:13px}
+main{max-width:1120px;margin:auto;padding:70px 22px 55px;text-align:center}.eyebrow{color:var(--cyan);font-weight:800;letter-spacing:4px;font-size:12px}
+h1{font-size:clamp(36px,6vw,62px);margin:14px 0 12px;line-height:1.05}h1 span{background:linear-gradient(90deg,#22d3ee,#a78bfa,#f472b6);-webkit-background-clip:text;color:transparent}
+.intro{color:var(--muted);max-width:600px;margin:0 auto 42px;line-height:1.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px;text-align:left}
+.rank{position:relative;background:linear-gradient(155deg,#18213a,#0e1425);border:1px solid #ffffff20;border-radius:18px;padding:25px 20px;overflow:hidden;transition:.22s;box-shadow:0 12px 35px #0004}
+.rank:hover{transform:translateY(-7px);border-color:var(--rank);box-shadow:0 18px 45px #0008}
+.rank:before{content:"";position:absolute;width:150px;height:150px;border-radius:50%;background:var(--rank);filter:blur(75px);opacity:.22;right:-60px;top:-65px}
+.icon{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;background:color-mix(in srgb,var(--rank) 20%,transparent);border:1px solid color-mix(in srgb,var(--rank) 65%,transparent);font-size:25px;margin-bottom:22px}
+.rank h2{font-size:22px;margin:0 0 8px;letter-spacing:1px}.desc{color:var(--muted);font-size:13px;min-height:36px}
+.price{font-size:34px;font-weight:900;margin:20px 0 18px}.price small{font-size:13px;color:var(--muted);font-weight:500}
+button{width:100%;border:0;border-radius:10px;padding:13px 14px;font-weight:800;color:#08101c;background:var(--rank);cursor:pointer;transition:.2s}button:hover{filter:brightness(1.12);transform:scale(1.02)}
+.note{color:#8490aa;font-size:12px;margin-top:28px}.footer{border-top:1px solid #ffffff14;padding:22px;text-align:center;color:#8490aa;font-size:12px}
+.modal{display:none;position:fixed;inset:0;background:#02040bd9;z-index:5;align-items:center;justify-content:center;padding:18px}.modal.show{display:flex}
+.dialog{width:min(420px,100%);background:#141d33;border:1px solid #ffffff24;border-radius:18px;padding:25px;text-align:left;box-shadow:0 25px 80px #000b}
+.dialog h2{margin:0 0 8px}.dialog p{color:var(--muted);font-size:14px;line-height:1.5}
+label{display:block;font-size:13px;margin:18px 0 7px;color:#dce4f8}input{width:100%;padding:13px;border-radius:9px;border:1px solid #ffffff2b;background:#080e1d;color:white;font-size:15px;outline:none}input:focus{border-color:var(--cyan)}
+.actions{display:flex;gap:10px;margin-top:18px}.actions button{flex:1}.cancel{background:#29344d;color:white}
+#orderText{display:none;margin-top:15px;padding:12px;border-radius:9px;background:#0a1222;color:#d7e5ff;font-size:13px;line-height:1.5}
+
+.top-actions{display:flex;align-items:center;gap:10px}.discord-link,.cart-top{display:inline-flex;align-items:center;justify-content:center;gap:7px;padding:10px 14px;border-radius:10px;text-decoration:none;font-size:12px;font-weight:900;letter-spacing:.5px}.discord-link{background:#5865f2;color:#fff}.cart-top{width:auto;background:#26334e;color:#fff;border:1px solid #ffffff25}.cart-top span{background:#22d3ee;color:#07111d;border-radius:20px;padding:2px 7px}.cart-list{margin:15px 0;padding:0;list-style:none}.cart-list li{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #ffffff18;color:#e9eeff;font-size:14px}.cart-total{font-size:20px;font-weight:900;text-align:right;margin:18px 0}.dialog .primary{background:#22d3ee;color:#07111d}.remove-item{background:#29344d!important;color:#fff!important;width:auto;padding:6px 10px}@media(max-width:520px){header{padding:15px 14px}.brand{font-size:16px}.top-actions{gap:6px}.discord-link,.cart-top{padding:9px 10px;font-size:10px}}
+
+/* Store page navigation and crate keys */
+.page-nav{display:flex;justify-content:center;gap:12px;margin:0 auto 30px;flex-wrap:wrap}
+.page-nav button{width:auto;min-width:145px;background:#26334e;color:#eaf1ff;border:1px solid #ffffff25}
+.page-nav button.active{background:linear-gradient(90deg,#22d3ee,#8b5cf6);color:#07111d}
+.page-view{display:none}.page-view.active{display:block}
+.key-marquee-wrap{max-width:760px;margin:0 auto 34px;padding:13px 18px;border:1px solid #ffffff25;border-radius:14px;background:#101a30;overflow:hidden;text-align:center}
+.key-marquee-title{font-size:12px;font-weight:900;letter-spacing:3px;color:var(--cyan);margin-bottom:10px}
+.key-marquee{overflow:hidden;white-space:nowrap;mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
+.key-marquee-track{display:inline-flex;align-items:center;gap:38px;min-width:max-content;animation:keyScroll 18s linear infinite}
+.key-marquee-track span{font-weight:900;letter-spacing:1px;color:#f7f8ff}.key-marquee-track b{color:#22d3ee}
+.key-marquee-wrap:hover .key-marquee-track{animation-play-state:paused}
+@keyframes keyScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.key-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:18px;text-align:left;max-width:900px;margin:0 auto}
+.key-card{--rank:#22d3ee;position:relative;background:linear-gradient(155deg,#18213a,#0e1425);border:1px solid #ffffff20;border-radius:18px;padding:25px 20px;overflow:hidden;box-shadow:0 12px 35px #0004;transition:.22s}
+.key-card:hover{transform:translateY(-7px);border-color:var(--rank)}
+.key-card .icon{font-size:27px}.key-card h2{font-size:21px;margin:0 0 8px;letter-spacing:1px}.key-card .desc{color:var(--muted);font-size:13px;min-height:36px}.key-card .price{font-size:34px;font-weight:900;margin:20px 0 18px}
+@media(prefers-reduced-motion:reduce){.key-marquee-track{animation:none}}
+</style>
+</head>
+<body>
+<header><div class="brand">RAVEN<span> SMP</span></div><nav class="top-actions"><a class="discord-link" href="https://discord.gg/r5pYrTPvN" target="_blank" rel="noopener">☁ DISCORD</a><button class="cart-top" onclick="showCart()">🛒 CART <span id="cartCount">0</span></button></nav></header>
+<main>
+  <nav class="page-nav" aria-label="Store pages">
+    <button id="ranksTab" class="active" onclick="showPage('ranks')">RANK STORE</button>
+    <button id="keysTab" onclick="showPage('keys')">CRATE KEYS</button>
+  </nav>
+  <section id="ranksPage" class="page-view active">
+  <div class="eyebrow">LEVEL UP YOUR GAME</div>
+  <h1>CHOOSE YOUR <span>RANK</span></h1>
+  <p class="intro">Unlock your next level on the server. Pick a rank below and enter your Minecraft username to prepare your order.</p>
+  <section class="grid" aria-label="Available ranks">
+    <article class="rank" style="--rank:#38bdf8"><div class="icon">✦</div><h2>VIP</h2><div class="desc">A great start to your journey.</div><div class="price">₹50</div><button onclick="buy('VIP',50)">ADD TO CART</button></article>
+    <article class="rank" style="--rank:#a78bfa"><div class="icon">◆</div><h2>ELITE</h2><div class="desc">Stand out from the crowd.</div><div class="price">₹100</div><button onclick="buy('ELITE',100)">ADD TO CART</button></article>
+    <article class="rank" style="--rank:#f59e0b"><div class="icon">⚔</div><h2>TITAN</h2><div class="desc">Show everyone your power.</div><div class="price">₹200</div><button onclick="buy('TITAN',200)">ADD TO CART</button></article>
+    <article class="rank" style="--rank:#f472b6"><div class="icon">♛</div><h2>LEGEND</h2><div class="desc">Make your name unforgettable.</div><div class="price">₹390</div><button onclick="buy('LEGEND',390)">ADD TO CART</button></article>
+    <article class="rank" style="--rank:#facc15"><div class="icon">👑</div><h2>GOD</h2><div class="desc">Reach the ultimate rank.</div><div class="price">₹400</div><button onclick="buy('GOD',400)">ADD TO CART</button></article>
+  </section>
+  <p class="note">Add ranks to your cart, then use BUY to contact the Raven SMP team on Discord and complete payment through a ticket.</p>
+  </section>
+  <section id="keysPage" class="page-view">
+    <div class="eyebrow">UNLOCK THE LOOT</div>
+    <h1>CRATE <span>KEYS</span></h1>
+    <p class="intro">Choose a crate key and add it to your cart. Enter your Minecraft username to prepare your order.</p>
+    <div class="key-marquee-wrap">
+      <div class="key-marquee-title">AVAILABLE CRATE KEYS</div>
+      <div class="key-marquee"><div class="key-marquee-track">
+        <span>🎉 PARTY KEY <b>1x · ₹5</b></span><span>🧩 MATRIX KEY <b>1x · ₹10</b></span><span>⭐ SPECIAL KEY <b>1x · ₹15</b></span><span>🌙 MONTHLY KEY <b>1x · ₹20</b></span>
+        <span>🎉 PARTY KEY <b>1x · ₹5</b></span><span>🧩 MATRIX KEY <b>1x · ₹10</b></span><span>⭐ SPECIAL KEY <b>1x · ₹15</b></span><span>🌙 MONTHLY KEY <b>1x · ₹20</b></span>
+      </div></div>
+    </div>
+    <section class="key-grid" aria-label="Available crate keys">
+      <article class="key-card" style="--rank:#f472b6"><div class="icon">🎉</div><h2>PARTY KEY</h2><div class="desc">Open the Party Crate.</div><div class="price">₹5 <small> / 1x</small></div><button onclick="buy('PARTY KEY',5)">ADD TO CART</button></article>
+      <article class="key-card" style="--rank:#a78bfa"><div class="icon">🧩</div><h2>MATRIX KEY</h2><div class="desc">Open the Matrix Crate.</div><div class="price">₹10 <small> / 1x</small></div><button onclick="buy('MATRIX KEY',10)">ADD TO CART</button></article>
+      <article class="key-card" style="--rank:#facc15"><div class="icon">⭐</div><h2>SPECIAL KEY</h2><div class="desc">Open the Special Crate.</div><div class="price">₹15 <small> / 1x</small></div><button onclick="buy('SPECIAL KEY',15)">ADD TO CART</button></article>
+      <article class="key-card" style="--rank:#22d3ee"><div class="icon">🌙</div><h2>MONTHLY KEY</h2><div class="desc">Open the Monthly Crate.</div><div class="price">₹20 <small> / 1x</small></div><button onclick="buy('MONTHLY KEY',20)">ADD TO CART</button></article>
+    </section>
+    <p class="note">Add crate keys to your cart, then use BUY NOW to contact the Raven SMP team on Discord.</p>
+  </section>
+</main>
+<footer class="footer">© 2026 RAVEN SMP • Rank Store</footer>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+ <div class="dialog">
+  <h2 id="modalTitle">Add rank to cart</h2><p id="summary">Enter your Minecraft username to continue.</p>
+  <label for="ign">Minecraft Username (IGN)</label><input id="ign" maxlength="16" placeholder="Enter your IGN" autocomplete="off">
+  <div class="actions"><button class="cancel" onclick="closeModal()">CANCEL</button><button class="primary" id="continueBtn" onclick="addToCart()">CONTINUE</button></div>
+ </div>
+</div>
+
+<div class="modal" id="cartModal" role="dialog" aria-modal="true" aria-labelledby="cartTitle">
+ <div class="dialog">
+  <h2 id="cartTitle">🛒 Your Cart</h2><p id="cartEmpty">Your cart is empty.</p>
+  <ul class="cart-list" id="cartList"></ul><div class="cart-total" id="cartTotal"></div>
+  <div class="actions"><button class="cancel" onclick="closeCart()">CLOSE</button><button class="primary" id="buyButton" onclick="buyCart()">BUY NOW</button></div>
+  <p style="font-size:12px;color:#aab4cc;margin-top:13px">BUY NOW opens our Discord. Create a ticket there and share your copied order details with staff.</p>
+ </div>
+</div>
+
+<script>
+const DISCORD_INVITE = 'https://discord.gg/r5pYrTPvN';
+let selectedRank = '', selectedPrice = 0;
+let cart = [];
+
+function showPage(page) {
+  const ranks = page === 'ranks';
+  document.getElementById('ranksPage').classList.toggle('active', ranks);
+  document.getElementById('keysPage').classList.toggle('active', !ranks);
+  document.getElementById('ranksTab').classList.toggle('active', ranks);
+  document.getElementById('keysTab').classList.toggle('active', !ranks);
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function buy(rank, price) {
+  selectedRank = rank; selectedPrice = price;
+  document.getElementById('modalTitle').textContent = 'Add ' + rank + ' to Cart';
+  document.getElementById('summary').textContent = rank + ' Rank • ₹' + price + ' — enter your Minecraft username.';
+  document.getElementById('ign').value = '';
+  document.getElementById('continueBtn').textContent = 'CONTINUE';
+  document.getElementById('modal').classList.add('show');
+  document.getElementById('ign').focus();
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+function addToCart() {
+  const ign = document.getElementById('ign').value.trim();
+  if (!/^[A-Za-z0-9_]{3,16}$/.test(ign)) {
+    alert('Please enter a valid Minecraft username (3–16 letters, numbers or underscores).'); return;
+  }
+  cart.push({rank:selectedRank, price:selectedPrice, ign});
+  updateCart(); closeModal(); alert(selectedRank + ' added to cart!');
+}
+function updateCart() {
+  document.getElementById('cartCount').textContent = cart.length;
+  const list = document.getElementById('cartList'); list.innerHTML = '';
+  let total = 0;
+  cart.forEach((item, index) => {
+    total += item.price;
+    const li = document.createElement('li');
+    const details = document.createElement('span');
+    details.textContent = item.rank + ' — ' + item.ign + ' — ₹' + item.price;
+    const remove = document.createElement('button');
+    remove.className = 'remove-item'; remove.textContent = 'REMOVE';
+    remove.onclick = () => { cart.splice(index, 1); updateCart(); };
+    li.append(details, remove); list.appendChild(li);
+  });
+  document.getElementById('cartEmpty').style.display = cart.length ? 'none' : 'block';
+  document.getElementById('cartTotal').textContent = cart.length ? 'Total: ₹' + total : '';
+  document.getElementById('buyButton').disabled = !cart.length;
+  document.getElementById('buyButton').style.opacity = cart.length ? '1' : '.45';
+}
+function showCart() { updateCart(); document.getElementById('cartModal').classList.add('show'); }
+function closeCart() { document.getElementById('cartModal').classList.remove('show'); }
+function buyCart() {
+  if (!cart.length) return;
+  const total = cart.reduce((sum, item) => sum + item.price, 0);
+  const lines = cart.map((item, i) => (i+1) + '. ' + item.rank + ' Rank | IGN: ' + item.ign + ' | ₹' + item.price);
+  const order = 'RAVEN SMP RANK ORDER\n' + lines.join('\n') + '\nTOTAL: ₹' + total +
+    '\nPlease help me complete this order. I will pay using the method provided by server staff.';
+  window.open(DISCORD_INVITE, '_blank', 'noopener');
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(order).then(() => {
+      alert('Order details copied! In Discord, create a ticket and paste your order details.');
+    }).catch(() => prompt('Copy these order details and paste them in your Discord ticket:', order));
+  } else prompt('Copy these order details and paste them in your Discord ticket:', order);
+  closeCart();
+}
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+document.getElementById('cartModal').addEventListener('click', e => { if (e.target.id === 'cartModal') closeCart(); });
+updateCart();
+</script>
+</body>
+</html>
